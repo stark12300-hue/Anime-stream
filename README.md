@@ -4,6 +4,8 @@ A responsive anime discovery and watch site with searchable catalogue, genre fil
 
 ## Features
 - Anime discovery/search with Tenrai and Jikan API fallback.
+- ToonStream-inspired portal layout with a centered search, anime/movie navigation, random-series sidebar, and a latest-episodes shelf populated from the shared AniVerse source API.
+- Latest-episode language filters automatically adapt to the languages assigned to imported sources. The homepage does not scrape or copy ToonStream videos; add only sources you are authorized to distribute.
 - Trending, popular, currently airing, movies, and genre filters.
 - Anime details, synopsis, score, genres, and official watch-search links.
 - Watch modal with admin/device-added playable-source cards, audio/subtitle language filtering, and previous/next controls.
