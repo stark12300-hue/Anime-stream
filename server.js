@@ -245,8 +245,9 @@ app.delete("/api/admin/sources/:animeId/:sourceId", requireAdmin, async (req, re
 });
 
 app.get("/admin", (req, res) => res.sendFile(path.join(ROOT, "admin.html")));
+app.get("/admin.html", (req, res) => res.sendFile(path.join(ROOT, "admin.html")));
 app.get("/", (req, res) => res.sendFile(path.join(ROOT, "index.html")));
-app.use(express.static(ROOT, { index: false }));
+app.get("/index.html", (req, res) => res.sendFile(path.join(ROOT, "index.html")));
 
 app.use((error, req, res, next) => {
   const status = Number(error.statusCode) || 500;
