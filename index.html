@@ -78,7 +78,7 @@ for(const base of APIS){
   const res=await fetch(base+path,{headers:{"Accept":"application/json"}});
   if(!res.ok)throw new Error("HTTP "+res.status);
   const payload=await res.json();
-  if(!Array.isArray(payload.data))throw new Error("Unexpected API response");
+  if(payload.data===undefined||payload.data===null)throw new Error("Unexpected API response");
   return payload.data;
  }catch(err){lastError=err;}
 }
