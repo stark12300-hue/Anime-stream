@@ -90,6 +90,7 @@ header.shell{height:66px;gap:22px;border-bottom:1px solid #382345;background:rgb
 #catalog>div[style*="justify-content:center"]{grid-column:1;grid-row:4}
 #catalog .filters{padding-bottom:13px}
 footer{border-color:#35243f}
+@media(max-width:1000px){header.shell{gap:12px}.nav{max-width:45vw;overflow-x:auto}.searchbox{width:190px;min-width:120px}}
 @media(max-width:1100px){#catalog{grid-template-columns:minmax(0,1fr) 230px;column-gap:15px}.latest-episode-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.nav{gap:11px}.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:800px){header.shell{gap:12px}.nav{gap:14px}#catalog{display:block}#catalog>.random-sidebar{margin-top:24px}.random-sidebar .random-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.latest-episode-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){header.shell{height:auto;min-height:64px}.brand{font-size:22px}.nav{order:3;width:100%;padding:4px 0;gap:18px}.hero.anime-portal{margin:15px 0 22px}.anime-portal .hero-copy{padding:28px 16px}.anime-portal h1{font-size:35px;letter-spacing:-1.1px}.anime-portal .hero-copy p{font-size:12px}.portal-search{padding-left:14px}.portal-search button{padding:10px 14px}.latest-episode-grid{grid-template-columns:1fr}.random-sidebar .random-list{grid-template-columns:repeat(2,minmax(0,1fr))}.random-sidebar .random-item{grid-template-columns:48px minmax(0,1fr)}.random-sidebar .random-item img{width:48px}.section-head h2{font-size:21px}}
@@ -193,7 +194,7 @@ function playSource(s,skipConfirm){const url=s.url;if(!/^https?:\/\//i.test(url|
 
 function renderRandomSidebar(list){
  const target=$("randomGrid");if(!target)return;
- const choices=(list||[]).filter(a=>a&&a.mal_id).slice(0,5);
+ const choices=(list||[]).filter(a=>a&&a.mal_id).slice().sort(()=>Math.random()-.5).slice(0,5);
  if(!choices.length){target.innerHTML='<div class="notice">Anime recommendations will appear here when the catalogue loads.</div>';return;}
  target.innerHTML=choices.map((a,i)=>'<button class="random-item" type="button" data-random-index="'+i+'"><img loading="lazy" src="'+esc(imageOf(a))+'" alt="" onerror="this.style.opacity=.15"><span><strong>'+esc(a.title||"Anime")+'</strong><small>★ '+esc(a.score||"—")+' · '+esc(a.type||"Series")+'</small></span></button>').join("");
  target.querySelectorAll("[data-random-index]").forEach(b=>b.addEventListener("click",()=>openAnime(choices[Number(b.dataset.randomIndex)])));
@@ -222,6 +223,7 @@ async function loadLatestEpisodes(){
    }
   }
   LATEST_EPISODES.sort((a,b)=>(Date.parse(b.updatedAt)||0)-(Date.parse(a.updatedAt)||0));
+  const language=$("homeLanguageFilter");if(language){const previous=language.value;const choices=[...new Set(LATEST_EPISODES.map(x=>String(x.language||"").trim()).filter(Boolean))].sort();language.innerHTML='<option value="all">All languages</option>'+choices.map(value=>'<option value="'+esc(value)+'">'+esc(value)+'</option>').join("");language.value=choices.includes(previous)?previous:"all";}
   renderLatestEpisodes();
  }catch(e){if(target)target.innerHTML='<div class="empty" style="grid-column:1/-1">Latest episodes need the AniVerse API to be deployed as a Web Service.</div>';}
 }
