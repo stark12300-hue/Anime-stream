@@ -1,32 +1,36 @@
 # AniVerse
 
-Responsive anime discovery and watch UI with a dark theme, catalogue search, genre filters, anime details, episode/source management, watch history, and a personal watchlist.
+A responsive anime discovery and watch site with searchable catalogue, genre filters, video playback, watch history, personal favourites, and a GitHub-synced episode-source admin panel.
 
 ## Features
-- Anime discovery/search with Tenrai API and Jikan API fallback.
+- Anime discovery/search with Tenrai and Jikan API fallback.
 - Trending, popular, currently airing, movies, and genre filters.
 - Anime details, synopsis, score, genres, and official watch-search links.
-- Video player supports direct MP4/WebM files, HLS streams (.m3u8) where the browser can play them, and supported provider embeds.
-- YouTube watch/short links are converted to embed URLs; Vimeo links are converted to the player URL.
-- Add an episode/source label, audio/subtitle note, URL, and player type.
-- Continue Watching saves playback progress for direct video playback and provides Resume.
-- My List / favourites and history are stored in the browser's local storage.
-- Responsive mobile and desktop layout.
-- Render static-site configuration in render.yaml.
+- Player support for direct MP4/WebM files, HLS streams (.m3u8) where browser/CORS support permits, and provider embeds.
+- YouTube watch/short links are converted to embed URLs; Vimeo links are converted to player URLs.
+- “Continue watching” progress and “My List” are stored in the visitor's browser.
+- Shared episode sources are stored in data/sources.json and can be managed through the authenticated /admin panel. Successful edits are committed to this GitHub repository.
+- Render Node web-service configuration is included in render.yaml.
 
 ## Deploy on Render
-1. Open https://dashboard.render.com/
-2. Choose New + → Static Site.
-3. Connect stark12300-hue/Anime-stream.
-4. If configuring manually, use:
-   - Build command: echo "Static site ready"
-   - Publish directory: .
-5. Deploy the latest commit.
+This version needs a **Web Service**, not a Static Site, because it uses a Node/Express API for shared sources and admin login.
+
+1. Open https://dashboard.render.com/ and create a new **Web Service** connected to stark12300-hue/Anime-stream.
+2. Use build command `npm install --omit=dev` and start command `node server.js` (the included render.yaml uses these settings for a Blueprint deployment).
+3. Add these environment variables in Render:
+   - `GITHUB_REPOSITORY` = `stark12300-hue/Anime-stream`
+   - `GITHUB_BRANCH` = `main`
+   - `GITHUB_TOKEN` = a GitHub fine-grained token with **Contents: Read and write** for this repository only
+   - `ADMIN_PASSWORD` = a strong, unique admin password
+   - `SESSION_SECRET` = a long random secret (the Blueprint config generates one automatically; set one manually if configuring by hand)
+   - `NODE_ENV` = `production`
+4. Deploy the Web Service. Open `/api/health` on the new Render URL to check that admin and GitHub sync configuration show as enabled. Open `/admin` to manage shared episode sources.
+5. Use the new Web Service URL for the website. An older Static Site deployment will not run the API/admin backend.
 
 ## Important limitations
-- This repository currently deploys as a static frontend. Episodes and sources added through the details dialog are stored in the current browser only; they are not shared with other visitors/devices.
-- There is no shared admin dashboard, user login, remote database, or synchronized episode catalogue yet. Those features require a backend service and persistent database.
-- Embed providers can block iframe playback. HLS availability depends on the stream's CORS configuration and the browser. Only authorized and compatible stream URLs can play.
-- Catalogue services are third-party APIs. Network availability, CORS behavior, rate limits, or API changes may affect loading.
-- Ad spaces are placeholders. Add an approved ad-network tag only after the provider has approved the site and follow its policies.
-- This project does not scrape third-party streaming sites or bypass access controls. Use video URLs and embeds you are authorized to stream.
+- The shared source list stores only source metadata/URLs; it does not host video files. A source must be valid, playable, and authorized for distribution. External providers can block iframe playback, and HLS can fail if the provider does not allow cross-origin playback.
+- Watch history and My List are device/browser-local; no visitor accounts or cross-device sync are implemented.
+- Admin-managed shared sources are committed to the public repository's data/sources.json file. Do not add private credentials or secret URLs there. Keep GITHUB_TOKEN in Render environment variables only; never put it in browser code or commit it.
+- Catalogue information comes from third-party APIs. Rate limits, network failures, CORS, or API changes may affect loading.
+- Ad spaces are placeholders. Add an approved ad-network tag only after the provider approves the site and follow its policies.
+- This project does not scrape third-party streaming sites or bypass access controls. Only use video URLs and embeds you are authorized to stream.
