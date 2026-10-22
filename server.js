@@ -16,6 +16,8 @@ const HIANIME_FEED_URL = process.env.HIANIME_FEED_URL || "";
 const HIANIME_FEED_TOKEN = process.env.HIANIME_FEED_TOKEN || "";
 const HIANIME_SYNC_MINUTES = Math.max(15, Number(process.env.HIANIME_SYNC_MINUTES || 60));
 let feedSyncInProgress = false;
+let episodeSyncInProgress = false;
+let lastEpisodeSync = { at: null, ok: null, message: "Not synced yet.", syncedAnime: 0, syncedEpisodes: 0, skippedAnime: 0 };
 let lastFeedSync = { at: null, ok: null, message: "Not synced yet.", importedAnime: 0, importedEpisodes: 0, importedSources: 0 };
 const SOURCE_FILE_PATH = "data/sources.json";
 const SESSION_COOKIE = "aniverse_session";
@@ -255,6 +257,68 @@ async function syncAuthorizedFeed() {
     throw error;
   } finally { feedSyncInProgress = false; }
 }
+
+async function syncPublicEpisodeMetadata() {
+  if (episodeSyncInProgress) throw new Error("Episode metadata sync is already running.");
+  episodeSyncInProgress = true;
+  try {
+    const records = await getRepositoryRecords();
+    const entries = Object.entries(records).filter(([id, item]) => /^[0-9]{1,12}$/.test(id) && item && item.title);
+    let syncedAnime = 0, syncedEpisodes = 0, skippedAnime = 0;
+    for (const [id, item] of entries) {
+      let page = 1, allEpisodes = [], hasNext = true;
+      try {
+        while (hasNext && page <= 50) {
+          const response = await fetch("https://api.jikan.moe/v4/anime/" + encodeURIComponent(id) + "/episodes?page=" + page, {
+            headers: { "Accept": "application/json", "User-Agent": "AniVerse-Episode-Metadata-Sync" },
+            signal: AbortSignal.timeout(15000)
+          });
+          if (response.status === 429) throw new Error("Public metadata API rate limit reached.");
+          if (!response.ok) throw new Error("Metadata API request failed (" + response.status + ").");
+          const payload = await response.json();
+          const batch = Array.isArray(payload.data) ? payload.data : [];
+          allEpisodes.push(...batch.map(ep => ({
+            number: String(ep.mal_id || ep.episode || ""),
+            title: String(ep.title || ep.title_japanese || ("Episode " + (ep.mal_id || ""))).slice(0, 180),
+            titleJapanese: String(ep.title_japanese || "").slice(0, 180),
+            titleRomanji: String(ep.title_romanji || "").slice(0, 180),
+            aired: ep.aired || null,
+            language: "Add manually: Hindi Dub / Hindi Sub / Japanese Sub",
+            metadataProvider: "Jikan public anime metadata",
+            playbackUrl: "",
+            updatedAt: new Date().toISOString()
+          })));
+          hasNext = Boolean(payload.pagination && payload.pagination.has_next_page && batch.length);
+          page++;
+          if (hasNext) await new Promise(resolve => setTimeout(resolve, 1200));
+        }
+        if (allEpisodes.length) {
+          item.episodes = allEpisodes;
+          item.provider = item.provider || "Jikan public anime metadata";
+          item.updatedAt = new Date().toISOString();
+          records[id] = item;
+          syncedAnime++;
+          syncedEpisodes += allEpisodes.length;
+        } else skippedAnime++;
+      } catch (error) {
+        skippedAnime++;
+        console.warn("Episode metadata sync skipped for " + id + ":", error.message);
+        if (String(error.message).includes("rate limit")) break;
+      }
+      await new Promise(resolve => setTimeout(resolve, 1200));
+    }
+    await saveRepositoryRecords(records);
+    lastEpisodeSync = { at: new Date().toISOString(), ok: true, message: "Public episode metadata sync completed.", syncedAnime, syncedEpisodes, skippedAnime };
+    return lastEpisodeSync;
+  } finally { episodeSyncInProgress = false; }
+}
+
+app.get("/api/episodes/status", (req, res) => res.json({ lastSync: lastEpisodeSync }));
+
+app.post("/api/admin/sync-episodes", requireAdmin, async (req, res, next) => {
+  try { res.json({ ok: true, sync: await syncPublicEpisodeMetadata() }); }
+  catch (error) { error.statusCode = 400; next(error); }
+});
 
 app.get("/api/feed/status", (req, res) => {
   res.json({ configured: Boolean(HIANIME_FEED_URL), intervalMinutes: HIANIME_SYNC_MINUTES, lastSync: lastFeedSync });
