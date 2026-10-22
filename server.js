@@ -12,6 +12,11 @@ const GITHUB_BRANCH = process.env.GITHUB_BRANCH || "main";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || "";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 const SESSION_SECRET = process.env.SESSION_SECRET || "";
+const HIANIME_FEED_URL = process.env.HIANIME_FEED_URL || "";
+const HIANIME_FEED_TOKEN = process.env.HIANIME_FEED_TOKEN || "";
+const HIANIME_SYNC_MINUTES = Math.max(15, Number(process.env.HIANIME_SYNC_MINUTES || 60));
+let feedSyncInProgress = false;
+let lastFeedSync = { at: null, ok: null, message: "Not synced yet.", importedAnime: 0, importedEpisodes: 0, importedSources: 0 };
 const SOURCE_FILE_PATH = "data/sources.json";
 const SESSION_COOKIE = "aniverse_session";
 const SESSION_SECONDS = 8 * 60 * 60;
@@ -159,7 +164,7 @@ function cleanSource(input) {
   try { parsed = new URL(url); } catch (error) { throw badRequest("Enter a valid video or embed URL."); }
   if (!["http:", "https:"].includes(parsed.protocol)) throw badRequest("Only HTTP and HTTPS URLs are accepted.");
   if (url.length > 2500) throw badRequest("The URL is too long.");
-  return { id: String(input.id || crypto.randomUUID()).slice(0, 80), name, language, url, type, updatedAt: new Date().toISOString() };
+  return { id: String(input.id || crypto.randomUUID()).slice(0, 80), name, language, url, type, episodeNumber: input.episodeNumber == null ? null : String(input.episodeNumber).slice(0, 24), episodeTitle: String(input.episodeTitle || "").trim().slice(0, 180), provider: String(input.provider || "").trim().slice(0, 80), updatedAt: new Date().toISOString() };
 }
 
 function cleanAnimeId(value) {
@@ -173,6 +178,8 @@ app.get("/api/health", (req, res) => {
     ok: true,
     service: "AniVerse API",
     sharedSyncConfigured: Boolean(GITHUB_TOKEN && GITHUB_REPOSITORY),
+    authorizedFeedConfigured: Boolean(HIANIME_FEED_URL),
+    feedSyncIntervalMinutes: HIANIME_SYNC_MINUTES,
     adminConfigured: Boolean(ADMIN_PASSWORD && SESSION_SECRET)
   });
 });
@@ -183,6 +190,79 @@ app.get("/api/catalog", async (req, res, next) => {
     res.setHeader("Cache-Control", "no-store");
     res.json({ records: records });
   } catch (error) { next(error); }
+});
+
+function feedUrl() {
+  let parsed;
+  try { parsed = new URL(HIANIME_FEED_URL); } catch (error) { throw new Error("Set HIANIME_FEED_URL to an authorized JSON feed URL."); }
+  if (parsed.protocol !== "https:") throw new Error("The authorized feed must use HTTPS.");
+  return parsed.toString();
+}
+
+async function syncAuthorizedFeed() {
+  if (feedSyncInProgress) throw new Error("A feed sync is already running.");
+  if (!HIANIME_FEED_URL) throw new Error("Configure HIANIME_FEED_URL with a JSON feed you are authorized to use.");
+  feedSyncInProgress = true;
+  try {
+    const headers = { "Accept": "application/json", "User-Agent": "AniVerse-Authorized-Feed-Sync" };
+    if (HIANIME_FEED_TOKEN) headers.Authorization = "Bearer " + HIANIME_FEED_TOKEN;
+    const response = await fetch(feedUrl(), { headers, signal: AbortSignal.timeout(20000) });
+    if (!response.ok) throw new Error("Feed request failed (" + response.status + ").");
+    const payload = await response.json();
+    if (!payload || !Array.isArray(payload.anime)) throw new Error('Feed JSON must contain an "anime" array.');
+    if (payload.anime.length > 500) throw new Error("Feed is limited to 500 anime per sync.");
+    const records = await getRepositoryRecords();
+    let importedAnime = 0, importedEpisodes = 0, importedSources = 0;
+    for (const item of payload.anime) {
+      const id = cleanAnimeId(item && (item.mal_id || item.id));
+      const title = String(item && item.title || "").trim().slice(0, 180);
+      if (!title) continue;
+      const existing = records[id] || { mal_id: Number(id), title, sources: [] };
+      const sources = Array.isArray(existing.sources) ? existing.sources.slice() : [];
+      const episodes = Array.isArray(item.episodes) ? item.episodes.slice(0, 2000).map(ep => ({
+        number: String(ep.number == null ? "" : ep.number).slice(0, 24),
+        title: String(ep.title || "").trim().slice(0, 180),
+        language: String(ep.language || "").trim().slice(0, 60),
+        updatedAt: new Date().toISOString()
+      })) : (Array.isArray(existing.episodes) ? existing.episodes : []);
+      importedEpisodes += episodes.length;
+      // Direct playback sources are accepted only when the feed and each source explicitly
+      // mark the URLs as authorized for distribution.
+      if (payload.authorizedForDistribution === true && Array.isArray(item.sources)) {
+        for (const raw of item.sources.slice(0, 1000)) {
+          if (!raw || raw.authorized !== true) continue;
+          const source = cleanSource(Object.assign({}, raw, { provider: raw.provider || "authorized feed" }));
+          const duplicate = sources.findIndex(x => x.url === source.url && x.name === source.name);
+          if (duplicate >= 0) sources[duplicate] = Object.assign({}, sources[duplicate], source);
+          else sources.push(source);
+          importedSources++;
+        }
+      }
+      records[id] = {
+        mal_id: Number(id), title,
+        poster: String(item.poster || item.image || existing.poster || "").slice(0, 1500),
+        genres: Array.isArray(item.genres) ? item.genres.slice(0, 30).map(g => String(typeof g === "object" ? g.name || "" : g).slice(0, 60)).filter(Boolean) : (existing.genres || []),
+        episodes, sources, provider: "authorized HiAnime-compatible feed",
+        updatedAt: new Date().toISOString()
+      };
+      importedAnime++;
+    }
+    await saveRepositoryRecords(records);
+    lastFeedSync = { at: new Date().toISOString(), ok: true, message: "Feed synced successfully.", importedAnime, importedEpisodes, importedSources };
+    return lastFeedSync;
+  } catch (error) {
+    lastFeedSync = Object.assign({}, lastFeedSync, { at: new Date().toISOString(), ok: false, message: String(error.message || "Feed sync failed.").slice(0, 220) });
+    throw error;
+  } finally { feedSyncInProgress = false; }
+}
+
+app.get("/api/feed/status", (req, res) => {
+  res.json({ configured: Boolean(HIANIME_FEED_URL), intervalMinutes: HIANIME_SYNC_MINUTES, lastSync: lastFeedSync });
+});
+
+app.post("/api/admin/sync-feed", requireAdmin, async (req, res, next) => {
+  try { res.json({ ok: true, sync: await syncAuthorizedFeed() }); }
+  catch (error) { error.statusCode = 400; next(error); }
 });
 
 app.get("/api/sources/:animeId", async (req, res, next) => {
@@ -297,4 +377,8 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log("AniVerse listening on port " + PORT);
   if (!ADMIN_PASSWORD || !SESSION_SECRET) console.warn("Admin login requires ADMIN_PASSWORD and SESSION_SECRET.");
   if (!GITHUB_TOKEN || !GITHUB_REPOSITORY) console.warn("Shared GitHub source sync is not configured yet.");
+  if (HIANIME_FEED_URL) {
+    syncAuthorizedFeed().catch(error => console.warn("Initial authorized feed sync failed:", error.message));
+    setInterval(() => syncAuthorizedFeed().catch(error => console.warn("Scheduled authorized feed sync failed:", error.message)), HIANIME_SYNC_MINUTES * 60 * 1000).unref();
+  } else console.warn("Automatic feed sync is disabled; set HIANIME_FEED_URL to an authorized JSON feed.");
 });
