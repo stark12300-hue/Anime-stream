@@ -142,23 +142,29 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+function badRequest(message) {
+  const error = new Error(message);
+  error.statusCode = 400;
+  return error;
+}
+
 function cleanSource(input) {
-  if (!input || typeof input !== "object") throw new Error("Provide an episode/source object.");
+  if (!input || typeof input !== "object") throw badRequest("Provide an episode/source object.");
   const name = String(input.name || "").trim().slice(0, 90);
   const url = String(input.url || "").trim();
   const language = String(input.language || "").trim().slice(0, 60);
   const type = ["auto", "video", "embed"].includes(input.type) ? input.type : "auto";
-  if (!name) throw new Error("Episode/source name is required.");
+  if (!name) throw badRequest("Episode/source name is required.");
   let parsed;
-  try { parsed = new URL(url); } catch (error) { throw new Error("Enter a valid video or embed URL."); }
-  if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("Only HTTP and HTTPS URLs are accepted.");
-  if (url.length > 2500) throw new Error("The URL is too long.");
+  try { parsed = new URL(url); } catch (error) { throw badRequest("Enter a valid video or embed URL."); }
+  if (!["http:", "https:"].includes(parsed.protocol)) throw badRequest("Only HTTP and HTTPS URLs are accepted.");
+  if (url.length > 2500) throw badRequest("The URL is too long.");
   return { id: String(input.id || crypto.randomUUID()).slice(0, 80), name, language, url, type, updatedAt: new Date().toISOString() };
 }
 
 function cleanAnimeId(value) {
   const id = String(value || "").trim();
-  if (!/^[0-9]{1,12}$/.test(id)) throw new Error("Anime ID must be a numeric catalogue ID.");
+  if (!/^[0-9]{1,12}$/.test(id)) throw badRequest("Anime ID must be a numeric catalogue ID.");
   return id;
 }
 
