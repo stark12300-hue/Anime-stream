@@ -6,6 +6,7 @@ A responsive anime discovery and watch site with searchable catalogue, genre fil
 - Anime discovery/search with Tenrai and Jikan API fallback.
 - Trending, popular, currently airing, movies, and genre filters.
 - Anime details, synopsis, score, genres, and official watch-search links.
+- Toonstream-style watch modal with episode cards, audio/subtitle language filtering, previous/next episode controls, and a focused player header.
 - Player support for direct MP4/WebM files, HLS streams (.m3u8) where browser/CORS support permits, and provider embeds.
 - YouTube watch/short links are converted to embed URLs; Vimeo links are converted to player URLs.
 - “Continue watching” progress and “My List” are stored in the visitor's browser.
