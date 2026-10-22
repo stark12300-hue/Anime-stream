@@ -50,7 +50,7 @@ footer{margin-top:65px;border-top:1px solid var(--line);padding:30px 0 45px;colo
 <div class="section-head"><div><h2>Find your next favorite</h2><p>Quick links to explore more anime.</p></div></div>
 <div class="filters"><a class="chip" href="https://myanimelist.net/topanime.php" target="_blank" rel="noopener noreferrer">Top anime ↗</a><a class="chip" href="https://www.crunchyroll.com/" target="_blank" rel="noopener noreferrer">Watch on Crunchyroll ↗</a><a class="chip" href="https://www.netflix.com/" target="_blank" rel="noopener noreferrer">Watch on Netflix ↗</a><a class="chip" href="https://www.youtube.com/" target="_blank" rel="noopener noreferrer">Official trailers ↗</a></div>
 </section>
-<footer><div><div class="footer-brand"><span style="color:var(--pink)">ani</span>verse.</div><p style="margin:8px 0 0">A home for anime fans and curious explorers.</p></div><div>Anime information powered by Tenrai API (public MyAnimeList catalogue data).<br>Video playback is available only for links you are authorized to use.</div><div>© <span id="year"></span> AniVerse</div></footer>
+<footer><div><div class="footer-brand"><span style="color:var(--pink)">ani</span>verse.</div><p style="margin:8px 0 0">A home for anime fans and curious explorers.</p></div><div>Anime information powered by public anime catalogue APIs (MyAnimeList data).<br>Video playback is available only for links you are authorized to use.</div><div>© <span id="year"></span> AniVerse</div></footer>
 </main>
 <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-label="Anime details">
 <div class="modal"><button class="close" id="closeModal" aria-label="Close">×</button><div class="modal-top"><img id="modalImage" alt=""><div><div class="eyebrow" id="modalEyebrow">ANIME DETAILS</div><h2 id="modalTitle"></h2><div class="meta" id="modalMeta"></div><div class="tags" id="modalTags"></div><p id="modalSynopsis"></p><div class="hero-actions"><a class="btn primary" id="officialLink" href="https://www.crunchyroll.com/" target="_blank" rel="noopener noreferrer">Find official watch options ↗</a><button class="btn" id="copyTitle">Copy title</button></div></div></div><div class="modal-bottom"><h3>External video source</h3><p>Use a direct video URL or an embed URL only when you have permission to stream it. Sources you add here are saved in this browser only.</p><form class="source-form" id="sourceForm"><input id="sourceName" placeholder="Source label (e.g. Official player)" maxlength="50" required><input id="sourceUrl" type="url" placeholder="Authorized video/embed URL" required><button class="btn primary" type="submit">Add source</button></form><div class="source-list" id="sourceList"></div><div class="notice">External sources may block embedding. If a source does not permit iframe playback, open it directly instead. Do not add links to content you are not authorized to distribute.</div><div id="playerWrap" style="display:none;margin-top:18px"><div style="position:relative;padding-top:56.25%;background:#050509;border-radius:12px;overflow:hidden"><iframe id="videoPlayer" title="External video player" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe></div><button class="btn" id="hidePlayer" style="margin-top:10px">Close player</button></div></div></div>
@@ -58,7 +58,7 @@ footer{margin-top:65px;border-top:1px solid var(--line);padding:30px 0 45px;colo
 <div class="toast" id="toast"></div>
 <script>
 (function(){
-const API="https://api.tenrai.org/v1";
+const APIS=["https://api.tenrai.org/v1","https://api.jikan.moe/v4"];
 const grid=document.getElementById("animeGrid"),search=document.getElementById("search");
 let currentFilter="Trending",page=1,items=[],visibleItems=[],selectedAnime=null,searchTimer=null;
 const $=id=>document.getElementById(id);
@@ -71,9 +71,21 @@ function render(list){visibleItems=list||[];if(!visibleItems.length){grid.innerH
 grid.innerHTML=visibleItems.map((a,i)=>'<article class="card" data-index="'+i+'" tabindex="0" role="button" aria-label="Open '+esc(a.title)+'"><div class="poster"><img loading="lazy" src="'+esc(imageOf(a))+'" alt="'+esc(a.title)+' poster" onerror="this.style.opacity=.15"><span class="score">★ '+(a.score||"—")+'</span><span class="type">'+esc(a.type||"Anime")+'</span></div><h3 title="'+esc(a.title)+'">'+esc(a.title)+'</h3><div class="meta"><span>'+esc(a.year||a.aired&&a.aired.prop&&a.aired.prop.from&&a.aired.prop.from.year||"TBA")+'</span><span>•</span><span>'+esc(a.episodes||"?" )+' eps</span></div></article>').join("");
 grid.querySelectorAll(".card").forEach(el=>{const open=()=>openAnime(visibleItems[Number(el.dataset.index)]);el.addEventListener("click",open);el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open();}});});
 }
-async function getJson(path){const res=await fetch(API+path);if(!res.ok)throw new Error("Anime data service is busy");const data=await res.json();return data.data||[];}
+async function getJson(path){
+let lastError;
+for(const base of APIS){
+ try{
+  const res=await fetch(base+path,{headers:{"Accept":"application/json"}});
+  if(!res.ok)throw new Error("HTTP "+res.status);
+  const payload=await res.json();
+  if(!Array.isArray(payload.data))throw new Error("Unexpected API response");
+  return payload.data;
+ }catch(err){lastError=err;}
+}
+throw lastError||new Error("Anime data service is unavailable");
+}
 async function loadFilter(filter,append){currentFilter=filter;if(!append)page=1;document.querySelectorAll(".chip[data-filter]").forEach(b=>b.classList.toggle("active",b.dataset.filter===filter));$("sectionTitle").textContent=filter==="Trending"?"Trending this season":filter==="Popular"?"Most popular anime":filter==="Airing"?"Currently airing":filter==="Movie"?"Anime movies":filter+" anime";$("sectionSubtitle").textContent="Explore stories selected for your next watch.";if(!append)skeletons();
-try{let path;if(filter==="Popular")path="/top/anime?page="+page+"&limit=24&filter=bypopularity";else if(filter==="Airing")path="/seasons/now?page="+page+"&limit=24";else if(filter==="Movie")path="/top/anime?type=movie&page="+page+"&limit=24";else if(["Action","Adventure","Comedy","Drama","Fantasy","Romance"].includes(filter)){const ids={Action:1,Adventure:2,Comedy:4,Drama:8,Fantasy:10,Romance:22};path="/anime?genres="+ids[filter]+"&order_by=score&sort=desc&page="+page+"&limit=24";}else path="/top/anime?page="+page+"&limit=24&filter=airing";
+try{let path;if(filter==="Popular")path="/top/anime?page="+page+"&limit=24&filter=bypopularity";else if(filter==="Airing")path="/seasons/now?page="+page+"&limit=24";else if(filter==="Movie")path="/top/anime?type=movie&page="+page+"&limit=24";else if(["Action","Adventure","Comedy","Drama","Fantasy","Romance"].includes(filter)){const ids={Action:1,Adventure:2,Comedy:4,Drama:8,Fantasy:10,Romance:22};path="/anime?genres="+ids[filter]+"&order_by=score&sort=desc&page="+page+"&limit=24";}else path="/top/anime?page="+page+"&limit=24&filter=bypopularity";
 const data=await getJson(path);items=append?items.concat(data):data;const q=search.value.trim().toLowerCase();render(q?items.filter(a=>(a.title||"").toLowerCase().includes(q)||(a.title_english||"").toLowerCase().includes(q)):items);$("statCount").textContent=items.length+"+";$("loadMore").style.display=data.length?"inline-block":"none";
 }catch(e){if(!append)grid.innerHTML='<div class="empty">Could not load anime right now. Check your connection and try refresh.</div>';toast("Anime service is temporarily unavailable. Tap Refresh list to retry.");}}
 async function doSearch(q){if(!q){loadFilter(currentFilter,false);return;}skeletons();try{const data=await getJson("/anime?q="+encodeURIComponent(q)+"&limit=24&sfw-strict");items=data;render(data);}catch(e){grid.innerHTML='<div class="empty">Search is temporarily unavailable. Try again shortly.</div>';}}
@@ -81,7 +93,18 @@ function sourcesFor(a){try{return JSON.parse(localStorage.getItem("aniverse-sour
 function saveSources(a,s){localStorage.setItem("aniverse-sources-"+a.mal_id,JSON.stringify(s));}
 function renderSources(){const list=$("sourceList");const sources=selectedAnime?sourcesFor(selectedAnime):[];if(!sources.length){list.innerHTML='<span class="notice">No sources added yet.</span>';return;}list.innerHTML=sources.map((s,i)=>'<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><button class="source-link" data-play="'+i+'">▶ '+esc(s.name)+'</button><a class="source-link" href="'+esc(s.url)+'" target="_blank" rel="noopener noreferrer">Open ↗</a><button class="chip" data-remove="'+i+'" aria-label="Remove source">Remove</button></div>').join("");list.querySelectorAll("[data-play]").forEach(b=>b.onclick=()=>playSource(sources[Number(b.dataset.play)]));list.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{const next=sourcesFor(selectedAnime);next.splice(Number(b.dataset.remove),1);saveSources(selectedAnime,next);renderSources();toast("Source removed from this browser.");});}
 function playSource(s){const url=s.url;if(!/^https?:\/\//i.test(url)){toast("Please use a valid HTTPS/HTTP URL.");return;}if(!confirm("Play this external source? Only continue if you trust and are authorized to use it."))return;$("playerWrap").style.display="block";$("videoPlayer").src=url;$("playerWrap").scrollIntoView({behavior:"smooth",block:"center"});}
-function openAnime(a){if(!a)return;selectedAnime=a;$("modalImage").src=imageOf(a);$("modalImage").alt=(a.title||"Anime")+" poster";$("modalTitle").textContent=a.title||"Anime";$("modalMeta").textContent=[a.type,a.year||a.aired&&a.aired.prop&&a.aired.prop.from&&a.aired.prop.from.year,a.episodes?(a.episodes+" episodes"):"Episode count unknown",a.score?("★ "+a.score):""].filter(Boolean).join(" · ");$("modalTags").innerHTML=(a.genres||[]).slice(0,7).map(g=>'<span class="tag">'+esc(g.name)+'</span>').join("");$("modalSynopsis").textContent=a.synopsis||"Synopsis is not available for this title.";const q=encodeURIComponent(a.title_english||a.title||"anime");$("officialLink").href="https://www.crunchyroll.com/search?q="+q;$("playerWrap").style.display="none";$("videoPlayer").src="";renderSources();$("modalBackdrop").classList.add("open");document.body.style.overflow="hidden";}
+async function openAnime(a){if(!a)return;selectedAnime=a;$("modalImage").src=imageOf(a);$("modalImage").alt=(a.title||"Anime")+" poster";$("modalTitle").textContent=a.title||"Anime";$("modalMeta").textContent=[a.type,a.year||a.aired&&a.aired.prop&&a.aired.prop.from&&a.aired.prop.from.year,a.episodes?(a.episodes+" episodes"):"Episode count unknown",a.score?("★ "+a.score):""].filter(Boolean).join(" · ");$("modalTags").innerHTML=(a.genres||[]).slice(0,7).map(g=>'<span class="tag">'+esc(g.name)+'</span>').join("");$("modalSynopsis").textContent=a.synopsis||"Synopsis is not available for this title.";const q=encodeURIComponent(a.title_english||a.title||"anime");$("officialLink").href="https://www.crunchyroll.com/search?q="+q;$("playerWrap").style.display="none";$("videoPlayer").src="";renderSources();$("modalBackdrop").classList.add("open");document.body.style.overflow="hidden";
+const trailerButton=document.getElementById("trailerButton");if(trailerButton)trailerButton.remove();
+try{
+ const trailers=await getJson("/anime/"+a.mal_id+"/videos");
+ const trailer=trailers&&trailers.promo&&trailers.promo.trailer;
+ if(trailer&&trailer.embed_url){
+  const btn=document.createElement("button");btn.id="trailerButton";btn.className="btn";btn.style.marginTop="10px";btn.textContent="▶ Play official trailer";
+  btn.onclick=()=>{ $("playerWrap").style.display="block";$("videoPlayer").src=trailer.embed_url;$("playerWrap").scrollIntoView({behavior:"smooth",block:"center"}); };
+  $("officialLink").insertAdjacentElement("afterend",btn);
+ }
+}catch(e){}
+}
 function closeModal(){$("modalBackdrop").classList.remove("open");$("videoPlayer").src="";$("playerWrap").style.display="none";document.body.style.overflow="";}
 document.querySelectorAll(".chip[data-filter]").forEach(b=>b.addEventListener("click",()=>{search.value="";loadFilter(b.dataset.filter,false);}));
 document.querySelectorAll("[data-genre]").forEach(a=>a.addEventListener("click",()=>{loadFilter(a.dataset.genre,false);}));
