@@ -236,7 +236,7 @@ async function loadLatestEpisodes(){
    if(!record||!Array.isArray(record.sources))continue;
    for(const source of record.sources){
     if(!source||!/^https?:\/\//i.test(String(source.url||"")))continue;
-    LATEST_EPISODES.push({mal_id:String(record.mal_id||id),title:String(record.title||"Anime"),name:String(source.name||"Episode"),episodeNumber:String(source.episodeNumber||""),episodeTitle:String(source.episodeTitle||""),language:String(source.language||""),url:String(source.url),type:source.type||"auto",id:String(source.id||source.url),updatedAt:String(source.updatedAt||record.updatedAt||"")});
+    LATEST_EPISODES.push({mal_id:String(record.mal_id||id),title:String(record.title||"Anime"),name:String(source.name||"Episode"),episodeNumber:String(source.episodeNumber||""),episodeTitle:String(source.episodeTitle||""),language:String(source.language||""),provider:String(source.provider||""),url:String(source.url),type:source.type||"auto",id:String(source.id||source.url),updatedAt:String(source.updatedAt||record.updatedAt||"")});
    }
   }
   LATEST_EPISODES.sort((a,b)=>(Date.parse(b.updatedAt)||0)-(Date.parse(a.updatedAt)||0));
