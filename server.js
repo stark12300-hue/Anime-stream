@@ -17,7 +17,7 @@ const SESSION_COOKIE = "aniverse_session";
 const SESSION_SECONDS = 8 * 60 * 60;
 
 app.disable("x-powered-by");
-app.use(express.json({ limit: "256kb" }));
+app.use(express.json({ limit: "2mb" }));
 app.use((req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
@@ -234,6 +234,39 @@ app.post("/api/admin/sources", requireAdmin, async (req, res, next) => {
     records[id] = { mal_id: Number(id), title: title, sources: sources, updatedAt: new Date().toISOString() };
     await saveRepositoryRecords(records);
     res.json({ ok: true, anime: records[id] });
+  } catch (error) { next(error); }
+});
+
+app.post("/api/admin/import", requireAdmin, async (req, res, next) => {
+  try {
+    const input = req.body && req.body.anime;
+    if (!Array.isArray(input) || input.length < 1) {
+      throw badRequest("Provide an anime array containing at least one anime record.");
+    }
+    if (input.length > 500) throw badRequest("Import is limited to 500 anime records per batch.");
+    const records = await getRepositoryRecords();
+    let importedAnime = 0;
+    let importedSources = 0;
+    for (const item of input) {
+      const id = cleanAnimeId(item && item.mal_id);
+      const title = String(item && item.title || "").trim().slice(0, 180);
+      if (!title) throw badRequest("Every anime record must have a title.");
+      if (!Array.isArray(item.sources)) throw badRequest("Each anime record must include a sources array.");
+      if (item.sources.length > 1000) throw badRequest("An anime record cannot contain more than 1,000 sources.");
+      const existing = records[id] || { mal_id: Number(id), title: title, sources: [] };
+      const sources = Array.isArray(existing.sources) ? existing.sources.slice() : [];
+      for (const raw of item.sources) {
+        const source = cleanSource(raw);
+        const duplicate = sources.findIndex(x => x.url === source.url && x.name === source.name);
+        if (duplicate >= 0) sources[duplicate] = Object.assign({}, sources[duplicate], source);
+        else sources.push(source);
+        importedSources++;
+      }
+      records[id] = { mal_id: Number(id), title: title, sources: sources, updatedAt: new Date().toISOString() };
+      importedAnime++;
+    }
+    await saveRepositoryRecords(records);
+    res.json({ ok: true, importedAnime, importedSources });
   } catch (error) { next(error); }
 });
 
