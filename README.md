@@ -42,3 +42,8 @@ This version needs a **Web Service**, not a Static Site, because it uses a Node/
 - Catalogue information comes from third-party APIs. Rate limits, network failures, CORS, or API changes may affect loading.
 - Ad spaces are placeholders. Add an approved ad-network tag only after the provider approves the site and follow its policies.
 - This project does not scrape third-party streaming sites or bypass access controls. Only use video URLs and embeds you are authorized to stream.
+
+
+## Bulk episode metadata sync
+
+After deploying the latest `main` branch, sign in to `/admin` and select **Sync episode metadata**. The server fetches public episode numbers, titles, and air dates from Jikan for anime IDs in `data/sources.json`, then commits the results to the configured GitHub repository. This can take several minutes for long-running series. It does not scrape HiAnime pages or provide video streams. Hindi Dub/Sub availability and playback URLs are deliberately marked for manual entry; add only links you are authorized to distribute.
