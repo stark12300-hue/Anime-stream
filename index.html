@@ -205,7 +205,7 @@ function renderLatestEpisodes(){
  const wanted=$("homeLanguageFilter")?$("homeLanguageFilter").value:"all";
  const filtered=LATEST_EPISODES.filter(x=>wanted==="all"||(String(x.language||"").trim().toLowerCase()===wanted.toLowerCase()));
  if(!filtered.length){target.innerHTML='<div class="empty" style="grid-column:1/-1">'+(LATEST_EPISODES.length?'No recently added episodes match this language.':'No playable episode sources have been added yet. Add authorized episode URLs from the Admin panel and they will appear here.')+'</div>';return;}
- target.innerHTML=filtered.slice(0,12).map((x,i)=>'<article class="latest-episode-card"><div class="latest-episode-top"><div class="latest-episode-mark">▶</div><div style="min-width:0"><div class="latest-title">'+esc(x.title||"Anime")+'</div><div class="latest-meta">'+esc(x.name||"Episode")+' · '+esc(x.language||"Language not specified")+'</div></div></div><button type="button" data-latest-play="'+i+'">Play episode ↗</button></article>').join("");
+ target.innerHTML=filtered.slice(0,12).map((x,i)=>'<article class="latest-episode-card"><div class="latest-episode-top"><div class="latest-episode-mark">▶</div><div style="min-width:0"><div class="latest-title">'+esc(x.title||"Anime")+'</div><div class="latest-meta">'+(x.episodeNumber?'Episode '+esc(x.episodeNumber)+' · ':'')+esc(x.episodeTitle||x.name||"Episode")+' · '+esc(x.language||"Language not specified")+'</div></div></div><button type="button" data-latest-play="'+i+'">Play episode ↗</button></article>').join("");
  target.querySelectorAll("[data-latest-play]").forEach(b=>b.addEventListener("click",()=>playLatestEpisode(filtered[Number(b.dataset.latestPlay)])));
 }
 async function loadLatestEpisodes(){
@@ -219,7 +219,7 @@ async function loadLatestEpisodes(){
    if(!record||!Array.isArray(record.sources))continue;
    for(const source of record.sources){
     if(!source||!/^https?:\/\//i.test(String(source.url||"")))continue;
-    LATEST_EPISODES.push({mal_id:String(record.mal_id||id),title:String(record.title||"Anime"),name:String(source.name||"Episode"),language:String(source.language||""),url:String(source.url),type:source.type||"auto",id:String(source.id||source.url),updatedAt:String(source.updatedAt||record.updatedAt||"")});
+    LATEST_EPISODES.push({mal_id:String(record.mal_id||id),title:String(record.title||"Anime"),name:String(source.name||"Episode"),episodeNumber:String(source.episodeNumber||""),episodeTitle:String(source.episodeTitle||""),language:String(source.language||""),url:String(source.url),type:source.type||"auto",id:String(source.id||source.url),updatedAt:String(source.updatedAt||record.updatedAt||"")});
    }
   }
   LATEST_EPISODES.sort((a,b)=>(Date.parse(b.updatedAt)||0)-(Date.parse(a.updatedAt)||0));
