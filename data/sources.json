@@ -1,1 +1,292 @@
-{}
+{
+  "20": {
+    "mal_id": 20,
+    "title": "Naruto",
+    "poster": "",
+    "genres": [
+      "Action",
+      "Adventure"
+    ],
+    "episodes": [],
+    "sources": [],
+    "provider": "AniVerse starter catalogue",
+    "metadataOnly": true,
+    "updatedAt": "2026-10-22T17:31:25.564Z"
+  },
+  "21": {
+    "mal_id": 21,
+    "title": "One Piece",
+    "poster": "",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Fantasy"
+    ],
+    "episodes": [],
+    "sources": [],
+    "provider": "AniVerse starter catalogue",
+    "metadataOnly": true,
+    "updatedAt": "2026-10-22T17:31:25.560Z"
+  },
+  "269": {
+    "mal_id": 269,
+    "title": "Bleach",
+    "poster": "",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Fantasy"
+    ],
+    "episodes": [],
+    "sources": [],
+    "provider": "AniVerse starter catalogue",
+    "metadataOnly": true,
+    "updatedAt": "2026-10-22T17:31:25.564Z"
+  },
+  "813": {
+    "mal_id": 813,
+    "title": "Dragon Ball Z",
+    "poster": "",
+    "genres": [
+      "Action",
+      "Adventure"
+    ],
+    "episodes": [],
+    "sources": [],
+    "provider": "AniVerse starter catalogue",
+    "metadataOnly": true,
+    "updatedAt": "2026-10-22T17:31:25.564Z"
+  },
+  "1535": {
+    "mal_id": 1535,
+    "title": "Death Note",
+    "poster": "",
+    "genres": [
+      "Mystery",
+      "Psychological",
+      "Thriller"
+    ],
+    "episodes": [],
+    "sources": [],
+    "provider": "AniVerse starter catalogue",
+    "metadataOnly": true,
+    "updatedAt": "2026-10-22T17:31:25.564Z"
+  },
+  "1735": {
+    "mal_id": 1735,
+    "title": "Naruto: Shippuden",
+    "poster": "",
+    "genres": [
+      "Action",
+      "Adventure"
+    ],
+    "episodes": [],
+    "sources": [],
+    "provider": "AniVerse starter catalogue",
+    "metadataOnly": true,
+    "updatedAt": "2026-10-22T17:31:25.564Z"
+  },
+  "5114": {
+    "mal_id": 5114,
+    "title": "Fullmetal Alchemist: Brotherhood",
+    "poster": "",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Drama"
+    ],
+    "episodes": [],
+    "sources": [],
+    "provider": "AniVerse starter catalogue",
+    "metadataOnly": true,
+    "updatedAt": "2026-10-22T17:31:25.564Z"
+  },
+  "9253": {
+    "mal_id": 9253,
+    "title": "Steins;Gate",
+    "poster": "",
+    "genres": [
+      "Drama",
+      "Sci-Fi",
+      "Thriller"
+    ],
+    "episodes": [],
+    "sources": [],
+    "provider": "AniVerse starter catalogue",
+    "metadataOnly": true,
+    "updatedAt": "2026-10-22T17:31:25.564Z"
+  },
+  "11061": {
+    "mal_id": 11061,
+    "title": "Hunter x Hunter (2011)",
+    "poster": "",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Fantasy"
+    ],
+    "episodes": [],
+    "sources": [],
+    "provider": "AniVerse starter catalogue",
+    "metadataOnly": true,
+    "updatedAt": "2026-10-22T17:31:25.564Z"
+  },
+  "11757": {
+    "mal_id": 11757,
+    "title": "Sword Art Online",
+    "poster": "",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Fantasy"
+    ],
+    "episodes": [],
+    "sources": [],
+    "provider": "AniVerse starter catalogue",
+    "metadataOnly": true,
+    "updatedAt": "2026-10-22T17:31:25.564Z"
+  },
+  "16498": {
+    "mal_id": 16498,
+    "title": "Attack on Titan",
+    "poster": "",
+    "genres": [
+      "Action",
+      "Drama",
+      "Suspense"
+    ],
+    "episodes": [],
+    "sources": [],
+    "provider": "AniVerse starter catalogue",
+    "metadataOnly": true,
+    "updatedAt": "2026-10-22T17:31:25.564Z"
+  },
+  "30276": {
+    "mal_id": 30276,
+    "title": "One Punch Man",
+    "poster": "",
+    "genres": [
+      "Action",
+      "Comedy"
+    ],
+    "episodes": [],
+    "sources": [],
+    "provider": "AniVerse starter catalogue",
+    "metadataOnly": true,
+    "updatedAt": "2026-10-22T17:31:25.564Z"
+  },
+  "31964": {
+    "mal_id": 31964,
+    "title": "My Hero Academia",
+    "poster": "",
+    "genres": [
+      "Action",
+      "School"
+    ],
+    "episodes": [],
+    "sources": [],
+    "provider": "AniVerse starter catalogue",
+    "metadataOnly": true,
+    "updatedAt": "2026-10-22T17:31:25.564Z"
+  },
+  "34599": {
+    "mal_id": 34599,
+    "title": "Made in Abyss",
+    "poster": "",
+    "genres": [
+      "Adventure",
+      "Drama",
+      "Fantasy"
+    ],
+    "episodes": [],
+    "sources": [],
+    "provider": "AniVerse starter catalogue",
+    "metadataOnly": true,
+    "updatedAt": "2026-10-22T17:31:25.564Z"
+  },
+  "38000": {
+    "mal_id": 38000,
+    "title": "Demon Slayer: Kimetsu no Yaiba",
+    "poster": "",
+    "genres": [
+      "Action",
+      "Fantasy"
+    ],
+    "episodes": [],
+    "sources": [],
+    "provider": "AniVerse starter catalogue",
+    "metadataOnly": true,
+    "updatedAt": "2026-10-22T17:31:25.564Z"
+  },
+  "40028": {
+    "mal_id": 40028,
+    "title": "The Misfit of Demon King Academy",
+    "poster": "",
+    "genres": [
+      "Action",
+      "Fantasy"
+    ],
+    "episodes": [],
+    "sources": [],
+    "provider": "AniVerse starter catalogue",
+    "metadataOnly": true,
+    "updatedAt": "2026-10-22T17:31:25.564Z"
+  },
+  "40748": {
+    "mal_id": 40748,
+    "title": "Jujutsu Kaisen",
+    "poster": "",
+    "genres": [
+      "Action",
+      "Fantasy"
+    ],
+    "episodes": [],
+    "sources": [],
+    "provider": "AniVerse starter catalogue",
+    "metadataOnly": true,
+    "updatedAt": "2026-10-22T17:31:25.564Z"
+  },
+  "44511": {
+    "mal_id": 44511,
+    "title": "Chainsaw Man",
+    "poster": "",
+    "genres": [
+      "Action",
+      "Fantasy"
+    ],
+    "episodes": [],
+    "sources": [],
+    "provider": "AniVerse starter catalogue",
+    "metadataOnly": true,
+    "updatedAt": "2026-10-22T17:31:25.564Z"
+  },
+  "50265": {
+    "mal_id": 50265,
+    "title": "Spy x Family",
+    "poster": "",
+    "genres": [
+      "Action",
+      "Comedy"
+    ],
+    "episodes": [],
+    "sources": [],
+    "provider": "AniVerse starter catalogue",
+    "metadataOnly": true,
+    "updatedAt": "2026-10-22T17:31:25.564Z"
+  },
+  "52299": {
+    "mal_id": 52299,
+    "title": "Solo Leveling",
+    "poster": "",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Fantasy"
+    ],
+    "episodes": [],
+    "sources": [],
+    "provider": "AniVerse starter catalogue",
+    "metadataOnly": true,
+    "updatedAt": "2026-10-22T17:31:25.564Z"
+  }
+}
