@@ -18,3 +18,9 @@ services:
         sync: false
       - key: SESSION_SECRET
         generateValue: true
+      - key: HIANIME_FEED_URL
+        sync: false
+      - key: HIANIME_FEED_TOKEN
+        sync: false
+      - key: HIANIME_SYNC_MINUTES
+        value: "60"
