@@ -10,7 +10,8 @@ A responsive anime discovery and watch site with searchable catalogue, genre fil
 - Player support for direct MP4/WebM files, HLS streams (.m3u8) where browser/CORS support permits, and provider embeds.
 - YouTube watch/short links are converted to embed URLs; Vimeo links are converted to player URLs.
 - “Continue watching” progress and “My List” are stored in the visitor's browser.
-- Shared episode sources are stored in data/sources.json and can be managed through the authenticated /admin panel. Successful edits are committed to this GitHub repository.
+- Shared episode sources are stored in data/sources.json and can be managed through the authenticated /admin panel. Individual edits and authenticated bulk JSON imports are committed to this GitHub repository.
+- Bulk import accepts an `{"anime":[{"mal_id":"5114","title":"Example","sources":[{"name":"Episode 1","language":"Hindi Dub","url":"https://authorized.example/episode-1.mp4","type":"video"}]}]}` payload in `/admin`; use only authorized API/feed exports or URLs you may distribute.
 - Render Node web-service configuration is included in render.yaml.
 
 ## Deploy on Render
