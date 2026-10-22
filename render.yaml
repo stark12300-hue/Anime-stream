@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: aniverse
+    name: aniverse-fullstack
     runtime: node
     plan: free
     buildCommand: npm install --omit=dev
